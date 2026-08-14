@@ -36,12 +36,8 @@ Unter **Verwaltung → Einstellungen → Zusatzinhalte freischalten** können ze
 
 Die Freischaltcodes werden in einer separaten privaten Dokumentation verwaltet, die nicht Bestandteil der öffentlichen ZIP-Datei ist.
 
-## Nicht enthalten
-
-KassenWart 1.0 enthält keine Bargeldkasse, keine Rücklagenverwaltung, keine Backup-Funktionen und keine NFC-Anbindung.
-
 ## Lizenz
 
 KassenWart wird unter der [GNU General Public License Version 3](LICENSE) veröffentlicht (`GPL-3.0-only`).
 
-Copyright (c) 2026 Kevin Schmitz.
+Copyright (c) 2026 Kevin Schmitz - voidnexus.de

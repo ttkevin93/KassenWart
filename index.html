@@ -1,0 +1,479 @@
+<!--
+ Copyright (c) 2026 Kevin Schmitz - voidnexus.de
+ SPDX-License-Identifier: GPL-3.0-only
+-->
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#020617" />
+  <title>KassenWart</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-light">
+  <div id="app" class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brandtext">
+          <div id="brandTitle" class="brandtitle">KassenWart</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="btnLogout" class="btn ghost hidden">Abmelden</button>
+      </div>
+    </header>
+
+    <div id="logoutHint" class="logoutHint hidden" aria-hidden="true">
+      <div class="logoutHintText">
+        <span>Abmeldung in</span>
+        <strong id="logoutCountdown">— s</strong>
+      </div>
+      <div class="logoutProgress" aria-hidden="true">
+        <div id="logoutProgressBar" class="logoutProgressBar"></div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true">
+      <div id="toastIcon" class="toastIcon" aria-hidden="true">i</div>
+      <div id="toastText" class="toastText">—</div>
+    </div>
+
+    <main class="main">
+      <!-- IDLE -->
+      <section id="screenIdle" class="screen">
+        <div id="idleBatteryBadge" class="batteryBadge hidden" role="status" aria-live="polite" aria-label="Akkustand">
+          <span class="batteryIcon" aria-hidden="true"><span id="idleBatteryFill" class="batteryFill"></span></span>
+          <strong id="idleBatteryValue">—</strong>
+        </div>
+        <div class="idleClock" aria-live="off">
+          <div id="idleTime" class="idleTime">--:--</div>
+          <div id="idleDate" class="idleDate">—</div>
+        </div>
+
+        <div class="card">
+          <div class="cardtitle">Anmelden</div>
+          <div class="muted">4-stellige ID eingeben</div>
+
+          <div class="pinrow">
+            <div id="pinDots" class="pindots" aria-label="PIN Eingabe"></div>
+          </div>
+
+          <div class="keypad" id="keypad"></div>
+
+          <div class="row">
+            <button id="btnClear" class="btn ghost">Löschen</button>
+            <button id="btnOk" class="btn primary">OK</button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- USER -->
+      <section id="screenUser" class="screen hidden">
+        <div class="userhead">
+          <div>
+            <div id="userName" class="h1">—</div>
+          </div>
+          <div class="userBalanceActions">
+            <button id="btnPersonalReport" class="personalReportButton hidden" type="button" aria-label="Meine Auswertung öffnen" title="Meine Auswertung">i</button>
+            <div id="userBalance" class="balance">—</div>
+          </div>
+        </div>
+
+        <div class="divider userSectionDivider">
+          <div class="dividerline"></div>
+          <div class="dividertitle">Getränke</div>
+          <div class="dividerline"></div>
+        </div>
+        <div class="grid2x2" id="gridDrinks"></div>
+
+        <div class="divider userSectionDivider">
+          <div class="dividerline"></div>
+          <div class="dividertitle">Snacks</div>
+          <div class="dividerline"></div>
+        </div>
+
+        <div class="grid1x3" id="gridSnacks"></div>
+
+        <div id="sessionTxnsSection" class="hidden">
+          <div class="divider userSectionDivider userSessionDivider">
+            <div class="dividerline"></div>
+            <div class="dividertitle">Diese Sitzung</div>
+            <div class="dividerline"></div>
+          </div>
+          <div id="userTxns" class="list"></div>
+        </div>
+
+        <button id="btnShowTodayTxns" class="btn dayTxnsButton" aria-expanded="false" aria-controls="todayTxnsSection">Buchungen des Tages anzeigen</button>
+        <div id="todayTxnsSection" class="dayTxnsInline hidden">
+          <div class="dayTxnsTitle">Weitere Buchungen heute</div>
+          <div id="todayUserTxnsList" class="list"></div>
+        </div>
+      </section>
+
+      <!-- ADMIN LOGIN -->
+      <section id="screenAdminLogin" class="screen hidden">
+        <div class="card">
+          <div class="cardtitle">Admin</div>
+          <div class="muted">Admin-PIN eingeben</div>
+
+          <div class="pinrow">
+            <div id="adminDots" class="pindots" aria-label="Admin Passwort"></div>
+          </div>
+
+          <div class="keypad" id="adminKeypad"></div>
+
+          <div class="row">
+            <button id="btnAdminBack" class="btn ghost">Zurück</button>
+            <button id="btnAdminClear" class="btn">Löschen</button>
+            <button id="btnAdminLogin" class="btn adminLoginButton">Login</button>
+          </div>
+
+          <div id="adminLoginError" class="error hidden"></div>
+        </div>
+      </section>
+
+      <!-- ADMIN -->
+      <section id="screenAdmin" class="screen hidden">
+        <div class="tabs" id="adminTabs"></div>
+
+        <!-- Overview -->
+        <section id="adminOverview" class="adminpane">
+          <div class="adminSectionTitle">Übersicht</div>
+          <div class="adminKpiGrid">
+            <div class="card compact">
+              <div class="muted">Offene Summe</div>
+              <div id="kpiOpen" class="kpi">—</div>
+            </div>
+            <div class="card compact">
+              <div class="muted">Umsatz heute (Buchungen)</div>
+              <div id="kpiToday" class="kpi">—</div>
+            </div>
+            <div id="adminBatteryCard" class="card compact adminBatteryCard">
+              <div class="muted">Geräteakku</div>
+              <div class="adminBatteryLine">
+                <span class="batteryIcon" aria-hidden="true"><span id="adminBatteryFill" class="batteryFill"></span></span>
+                <strong id="adminBatteryValue" class="adminStatusValue">Nicht verfügbar</strong>
+              </div>
+              <div id="adminBatteryStatus" class="muted small">Verbindung zum Gerät wird geprüft.</div>
+            </div>
+          </div>
+
+          <div id="automaticSystemNotice" class="card compact adminNotice automaticSystemNotice hidden">
+            <div>
+              <strong>Systemprüfung:</strong>
+              <span id="automaticSystemNoticeText">—</span>
+            </div>
+            <button id="btnOpenSystemCheck" class="btn small" type="button">Prüfung anzeigen</button>
+          </div>
+
+          <div id="lowStockDetails" class="card compact adminNotice hidden"></div>
+
+          <div class="card">
+            <div class="cardtitle">Verbrauch (heute)</div>
+            <div id="todayConsumption" class="list"></div>
+          </div>
+        </section>
+
+        <!-- Products -->
+        <section id="adminProducts" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Produkte</div>
+            <div class="muted">Tap: ±1 Bestand • Longpress auf <b>+</b>: Menge anpassen</div>
+            <div id="productSummary" class="adminInlineSummary"></div>
+            <div id="productList" class="list"></div>
+          </div>
+        </section>
+
+        <!-- Users -->
+        <section id="adminUsers" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Nutzer</div>
+            <div id="userList" class="list"></div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle">Neuer Nutzer</div>
+            <div class="formrow">
+              <label>ID (4-stellig)</label>
+              <input id="newUserId" inputmode="numeric" maxlength="4" placeholder="z.B. 1234">
+            </div>
+            <div class="formrow">
+              <label>Name</label>
+              <input id="newUserName" placeholder="Name">
+            </div>
+            <div class="row">
+              <button id="btnAddUser" class="btn primary">Anlegen</button>
+            </div>
+            <div id="addUserError" class="error hidden"></div>
+          </div>
+        </section>
+
+        <!-- Payments -->
+        <section id="adminPayments" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Zahlung buchen</div>
+            <div class="formrow">
+              <label>Nutzer</label>
+              <select id="payUser"></select>
+            </div>
+            <div id="payOpen" class="payBalanceLarge">Saldo: —</div>
+            <div class="formrow">
+              <label>Betrag (EUR)</label>
+              <input id="payAmount" inputmode="decimal" placeholder="z.B. 10,00">
+            </div>
+            <div class="formrow">
+              <label>Notiz (optional)</label>
+              <input id="payNote" placeholder="z.B. Bar">
+            </div>
+            <div class="row">
+              <button id="btnFillAll" class="btn">Alles bezahlen</button>
+              <button id="btnAddPayment" class="btn primary">Zahlung speichern</button>
+            </div>
+            <div id="payError" class="error hidden"></div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle">Letzte Zahlungen</div>
+            <div id="paymentList" class="list"></div>
+          </div>
+        </section>
+
+        <!-- Monthly -->
+        <section id="adminMonthly" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Monatsauswertung</div>
+            <div class="formrow">
+              <label>Monat</label>
+              <select id="monthlySelect"></select>
+            </div>
+            <button id="monthlyToggle" class="btn primary reportToggle" type="button" aria-expanded="false">Gesamtübersicht anzeigen</button>
+          </div>
+          <div id="monthlyResults" class="reportResults">
+            <div id="monthlySummary" class="adminKpiGrid monthlySummary hidden"></div>
+            <div class="card reportFilterCard">
+              <div class="formrow">
+                <label>Nutzer suchen</label>
+                <input id="monthlyUserFilter" placeholder="Name oder ID">
+              </div>
+            </div>
+            <div id="monthlyUsers" class="monthlyUsers"></div>
+          </div>
+        </section>
+
+        <!-- Yearly -->
+        <section id="adminYearly" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Jahresauswertung</div>
+            <div class="formrow">
+              <label>Jahr</label>
+              <select id="yearlySelect"></select>
+            </div>
+            <button id="yearlyToggle" class="btn primary reportToggle" type="button" aria-expanded="false">Gesamtübersicht anzeigen</button>
+          </div>
+          <div id="yearlyResults" class="reportResults">
+            <div id="yearlySummary" class="adminKpiGrid monthlySummary hidden"></div>
+            <div class="card reportFilterCard">
+              <div class="formrow">
+                <label>Nutzer suchen</label>
+                <input id="yearlyUserFilter" placeholder="Name oder ID">
+              </div>
+            </div>
+            <div id="yearlyUsers" class="monthlyUsers"></div>
+          </div>
+        </section>
+
+        <!-- Settings -->
+        <section id="adminSettings" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Einstellungen</div>
+            <div class="adminOptionsGrid">
+            <div class="formrow">
+              <label for="setAppName">Name des Terminals</label>
+              <input id="setAppName" maxlength="40" placeholder="z.B. KassenWart Vereinsheim">
+              <div class="muted small">Dieser Name steht oben links auf jeder Seite.</div>
+            </div>
+            <div class="formrow">
+              <label>Auto-Logout Nutzer</label>
+              <select id="setUserTimeout"></select>
+            </div>
+            <div class="formrow">
+              <label>Auto-Logout Admin</label>
+              <select id="setAdminTimeout"></select>
+            </div>
+            <div class="formrow">
+              <label>Töne</label>
+              <select id="setSound">
+                <option value="true">an</option>
+                <option value="false">aus</option>
+              </select>
+            </div>
+            <div id="themeSettingRow" class="formrow hidden">
+              <label>Darstellung</label>
+              <select id="setTheme">
+                <option value="light">Hell</option>
+                <option value="dark">Dunkel</option>
+              </select>
+              <div class="muted small">Wurde über einen Zusatzcode freigeschaltet.</div>
+            </div>
+            <div class="formrow">
+              <label>Angefangenen Login zurücksetzen</label>
+              <select id="setIdleReset"></select>
+              <div class="muted small">Löscht eine unvollständige Nutzer-ID nach der gewählten Zeit.</div>
+            </div>
+            </div>
+            <div class="row">
+              <button id="btnSaveSettings" class="btn primary">Speichern</button>
+            </div>
+            <div id="settingsMsg" class="muted small" style="margin-top:10px;"></div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle">Benachrichtigungen</div>
+            <div class="muted small">Legt fest, wie lange Meldungen eingeblendet bleiben. Lange Fehlermeldungen bleiben automatisch eine Sekunde länger sichtbar.</div>
+            <div class="adminOptionsGrid">
+              <div class="formrow">
+                <label>Erfolg</label>
+                <select id="setToastSuccess"></select>
+              </div>
+              <div class="formrow">
+                <label>Information</label>
+                <select id="setToastInfo"></select>
+              </div>
+              <div class="formrow">
+                <label>Warnung</label>
+                <select id="setToastWarning"></select>
+              </div>
+              <div class="formrow">
+                <label>Fehler</label>
+                <select id="setToastError"></select>
+              </div>
+            </div>
+            <div class="row">
+              <button id="btnSaveNotifications" class="btn primary">Benachrichtigungen speichern</button>
+            </div>
+            <div id="notificationsMsg" class="muted small" style="margin-top:10px;"></div>
+          </div>
+
+          <details id="unlockPanel" class="card maintenancePanel">
+            <summary>Zusatzinhalte freischalten</summary>
+            <div class="maintenanceBody">
+              <div class="muted">Gib einen zehnstelligen Freischaltcode ein. Groß- und Kleinschreibung spielen keine Rolle.</div>
+              <div class="formrow">
+                <label for="unlockCode">Freischaltcode</label>
+                <input id="unlockCode" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="10 Zeichen">
+              </div>
+              <div class="row">
+                <button id="btnConfirmUnlock" class="btn primary" type="button">Freischalten</button>
+              </div>
+              <div id="unlockMessage" class="muted small" role="status" aria-live="polite"></div>
+              <div class="adminSubsectionTitle">Freigeschaltete Zusatzinhalte</div>
+              <div id="unlockedFeatureList" class="list"></div>
+            </div>
+          </details>
+
+          <details id="maintenancePanel" class="card maintenancePanel">
+            <summary>Wartung</summary>
+            <div class="maintenanceBody adminMaintenanceGrid">
+              <div class="card compact">
+                <div class="cardtitle">App neu starten</div>
+                <div class="muted small">Lädt die Anwendung neu. Gespeicherte Daten bleiben erhalten.</div>
+                <div class="muted small">Kann beiei Performanceproblemen helfen.</div>
+                <div class="row"><button id="btnReloadApp" class="btn">Jetzt neu starten</button></div>
+              </div>
+
+              <div class="card compact">
+                <div class="cardtitle">Admin-PIN ändern</div>
+                <div class="formrow"><label>Bisherige PIN</label><input id="pwOld" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+                <div class="formrow"><label>Neue 6-stellige PIN</label><input id="pwNew1" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+                <div class="formrow"><label>Neue PIN wiederholen</label><input id="pwNew2" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+                <div class="row"><button id="btnChangeAdminPw" class="btn primary">PIN ändern</button></div>
+                <div id="pwError" class="error hidden"></div>
+              </div>
+
+              <div class="card compact">
+                <div class="cardtitle">Gespeicherte Daten prüfen</div>
+                <div class="muted small">Sucht nach fehlerhaften Einträgen. Dabei werden keine Daten verändert.</div>
+                <div class="row"><button id="btnRunSystemCheck" class="btn primary">Jetzt prüfen</button></div>
+                <div id="systemCheckResult" class="systemCheckResult hidden"></div>
+              </div>
+
+              <div class="card compact">
+                <div class="cardtitle">Version</div>
+                <div id="localBuildStatusList" class="list"></div>
+              </div>
+
+              <div class="card compact adminGridFull deviceInfoCard">
+                <div class="cardtitle">Informationen</div>
+                <div id="diagnoseList" class="diagnoseGrid"></div>
+              </div>
+
+              <details id="testUserResetPanel" class="card maintenancePanel adminGridFull hidden">
+                <summary>Testnutzer zurücksetzen</summary>
+                <div class="maintenanceBody">
+                  <div class="formrow">
+                    <label for="testUserResetSelect">Testnutzer</label>
+                    <select id="testUserResetSelect"></select>
+                  </div>
+                  <div id="testUserResetSummary" class="muted small"></div>
+                  <div class="row"><button id="btnResetTestUser" class="btn danger">Testnutzer zurücksetzen</button></div>
+                </div>
+              </details>
+
+              <details id="factoryResetPanel" class="card maintenancePanel dangerPanel adminGridFull">
+                <summary>Werkseinstellungen</summary>
+                <div class="maintenanceBody">
+                  <div class="muted small">Löscht alle Produkte, Nutzer, Buchungen, Zahlungen, Einstellungen und Freischaltungen. Danach startet KassenWart leer mit den Standardwerten.</div>
+                  <div class="row"><button id="btnFactoryReset" class="btn danger">Werkseinstellungen wiederherstellen</button></div>
+                </div>
+              </details>
+            </div>
+          </details>
+        </section>
+
+        <!-- Buchungsverlauf -->
+        <section id="adminAudit" class="adminpane hidden">
+          <div class="card">
+            <div class="cardtitle">Buchungsverlauf</div>
+            <div class="auditFilters">
+              <div class="formrow"><label>Nutzer</label><select id="auditUserFilter"></select></div>
+              <div class="formrow"><label>Status</label><select id="auditStatusFilter"><option value="all">Alle</option><option value="active">Aktiv</option><option value="voided">Storniert</option></select></div>
+              <div class="formrow"><label>Von</label><input id="auditDateFrom" type="date"></div>
+              <div class="formrow"><label>Bis</label><input id="auditDateTo" type="date"></div>
+            </div>
+            <div class="row auditFilterActions">
+              <button id="btnAuditToday" class="btn" type="button">Heute</button>
+            </div>
+            <div id="auditList" class="list"></div>
+            <div class="cardtitle" style="margin-top:14px;">Preisänderungen</div>
+            <div id="priceHistoryList" class="list"></div>
+          </div>
+        </section>
+
+        <button id="btnAdminScrollTop" class="adminScrollTop" type="button" aria-label="Nach oben" title="Nach oben">↑</button>
+      </section>
+
+      <!-- Dialogebene bleibt für ältere Fully-/Android-WebViews im App-Dokument. -->
+      <div id="modalOverlay" class="modalOverlay hidden">
+        <div id="modalDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modalTitle" id="modalTitle">—</div>
+          <div class="modalBody" id="modalBody"></div>
+          <div class="row modalActions" id="modalActions"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+  <div class="appFooter">
+    <button class="footBadge" id="appFooterText" type="button" aria-label="Copyright- und Lizenzinformationen öffnen">&copy; 2026 Kevin Schmitz &middot; voidnexus.de</button>
+    <button id="btnAdmin" class="btn footerAdminButton" type="button" aria-label="Admin-Anmeldung öffnen">🔒 Admin</button>
+  </div>
+</body>
+</html>
